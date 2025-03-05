@@ -10,7 +10,7 @@ $(document).ready(function () {
             $('#userTableBody').empty();
 
             // Loop through the users and append them to the table
-            users = response.data;
+            users = Array.isArray(response) ? response : response.data;
             users && users.length && users.forEach(function (user) {
                 var row = '<tr>' +
                     '<td>' + user.id + '</td>' +
