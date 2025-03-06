@@ -10,20 +10,43 @@ $(document).ready(function () {
             $('#userTableBody').empty();
 
             // Loop through the users and append them to the table
-            users = Array.isArray(response) ? response : response.data;
-            users && users.length && users.forEach(function (user) {
-                var row = '<tr>' +
-                    '<td>' + user.id + '</td>' +
-                    '<td>' + user.name + '</td>' +
-                    '<td>' + user.email + '</td>' +
-                    '<td>' + user.age + '</td>' +
-                    '<td>' + user.address + '</td>' +
-                    '<td>' +
-                    '<button class="btn btn-sm btn-info editUser" data-id="' + user.id + '">Edit</button>' +
-                    '<button class="btn btn-sm btn-danger deleteUser ml-2" data-id="' + user.id + '">Delete</button>' +
-                    '</td>' +
-                    '</tr>';
-                $('#userTableBody').append(row);
+            users = Array.isArray(response) ? response : [];
+
+            if (users.length === 0) {
+              console.warn("No users found in API response:", response);
+              $("#userTableBody").html(
+                "<tr><td colspan='6' class='text-center'>No users found</td></tr>"
+              );
+              return;
+            }
+            users.forEach(function (user) {
+              var row =
+                "<tr>" +
+                "<td>" +
+                user.id +
+                "</td>" +
+                "<td>" +
+                user.name +
+                "</td>" +
+                "<td>" +
+                user.email +
+                "</td>" +
+                "<td>" +
+                user.age +
+                "</td>" +
+                "<td>" +
+                user.address +
+                "</td>" +
+                "<td>" +
+                '<button class="btn btn-sm btn-info editUser" data-id="' +
+                user.id +
+                '">Edit</button>' +
+                '<button class="btn btn-sm btn-danger deleteUser ml-2" data-id="' +
+                user.id +
+                '">Delete</button>' +
+                "</td>" +
+                "</tr>";
+              $("#userTableBody").append(row);
             });
         });
     }
