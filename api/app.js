@@ -34,7 +34,7 @@ app.get("/api/user", async (req, res) => {
   try {
     const pool = await connectDB();
     const result = await pool.request().query("SELECT * FROM users");
-    res.json({ data: result.recordset });
+    res.json(result.recordset );
   } catch (err) {
     res.status(500).json({ error: err.message });
   }

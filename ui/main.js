@@ -186,5 +186,5 @@ $(document).ready(function () {
         // Initial load of users
         getUsers();
     }
-    getText('./configs/config.json');
+    getText('/config.json');
 });
