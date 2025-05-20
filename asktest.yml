@@ -1,19 +1,25 @@
 trigger:
-  none
+  none  # تشغيل يدوي فقط
 
 pool:
   vmImage: 'ubuntu-latest'
 
 steps:
-  - script: echo "🚀 Testing AKS connection..."
-    displayName: 'Start Test'
-
-  - task: Kubernetes@1
-    displayName: 'Test kubectl get pods'
+  - task: AzureCLI@2
+    displayName: 'Set Azure Subscription and Connect to AKS'
     inputs:
-      connectionType: 'Azure Resource Manager'
-      azureSubscription: 'Azure for Capstone Project'  # ✅ غيّر هذا حسب اسمك الحقيقي
-      azureResourceGroup: 'DevOps1-CapstoneProject-champ-rg'
-      kubernetesCluster: 'DevOps1-CapstoneProject-champ-aks'
-      command: 'get'
-      arguments: 'pods -A'
+      azureSubscription: 'Azure for Capstone Project'  # ✅ اكتب هنا اسم الـ Service Connection بالضبط
+      scriptType: 'bash'
+      scriptLocation: 'inlineScript'
+      inlineScript: |
+        echo "🔄 Setting Azure subscription..."
+        az account set --subscription a7135c8f-934c-4000-b5b1-b09d6b645365
+
+        echo "🔐 Getting AKS credentials..."
+        az aks get-credentials \
+          --resource-group DevOps1-CapstoneProject-champ-rg \
+          --name DevOps1-CapstoneProject-champ-aks \
+          --overwrite-existing
+
+        echo "📡 Testing kubectl access..."
+        kubectl get pods -A
