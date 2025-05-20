@@ -59,7 +59,7 @@ stages:
             displayName: 'Apply Kubernetes Manifests'
             inputs:
               connectionType: 'Azure Resource Manager'
-              azureSubscription: 'SDA-capstone-aks'
+              azureSubscription: 'Azure subscription for Capstone'
               azureResourceGroup: 'DevOps1-CapstoneProject-champ-rg'
               kubernetesCluster: 'DevOps1-CapstoneProject-champ-aks'
               command: 'apply'
