@@ -44,13 +44,17 @@ stages:
     - task: AzureCLI@2
       displayName: 'Get Ingress and Service Info (namespace: project)'
       inputs:
-        azureSubscription: 'Azure subscription for Capstone'  # ✅ الاسم الصحيح
+        azureSubscription: 'Azure subscription for Capstone'
         scriptType: 'bash'
         scriptLocation: 'inlineScript'
         inlineScript: |
-          echo "🔍 Getting Kubernetes info in 'project' namespace..."
+          echo "📥 Getting AKS credentials..."
+          az aks get-credentials \
+            --resource-group DevOps1-CapstoneProject-champ-rg \
+            --name DevOps1-CapstoneProject-champ-aks \
+            --overwrite-existing
 
-          echo "👉 Ingress and services:"
+          echo "🔍 Getting Kubernetes info in 'project' namespace..."
           kubectl get ingress -n project
           kubectl get svc -n project
           kubectl get pods -n project
