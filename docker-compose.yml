@@ -1,0 +1,28 @@
+version: '3.8'
+
+services:
+  backend:
+    build:
+      context: ./api
+    container_name: backend
+    ports:
+      - "3000:3000"
+    environment:
+      - DB_USER=Champions
+      - DB_PASSWORD=m/2.71.0/do
+
+      - DB_HOST=devops1-champions-sqlserver.database.windows.net
+
+      - DB_NAME=Champions
+      - DB_PORT=1433
+    restart: always
+
+  frontend:
+    build:
+      context: ./ui
+    container_name: frontend
+    ports:
+      - "80:80"
+    depends_on:
+      - backend
+    restart: always
