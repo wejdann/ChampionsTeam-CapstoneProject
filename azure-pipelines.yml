@@ -18,6 +18,9 @@ stages:
           vmImage: 'ubuntu-latest'
 
         steps:
+          - script: echo "Pipeline started successfully (Build stage)"
+            displayName: 'Debug Start'
+
           - task: Checkout@1
 
           - task: Docker@2
@@ -49,6 +52,9 @@ stages:
           vmImage: 'ubuntu-latest'
 
         steps:
+          - script: echo "Pipeline started successfully (Deploy stage)"
+            displayName: 'Debug Start'
+
           - task: Kubernetes@1
             displayName: 'Apply Kubernetes Manifests'
             inputs:
