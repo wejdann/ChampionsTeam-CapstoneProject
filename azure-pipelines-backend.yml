@@ -19,7 +19,7 @@ stages:
         containerRegistry: 'dockerhub-ebtwim'
         repository: 'ebtwim/$(imageName)'
         command: 'buildAndPush'
-        Dockerfile: 'ui/Dockerfile'
+        Dockerfile: 'api/Dockerfile'
         tags: latest
 
 - stage: Deploy
