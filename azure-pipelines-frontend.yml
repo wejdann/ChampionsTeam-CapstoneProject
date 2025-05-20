@@ -1,0 +1,63 @@
+trigger:
+  branches:
+    include:
+      - main
+
+variables:
+  imageName: frontend-app
+
+stages:
+- stage: BuildAndPush
+  displayName: Build and Push Frontend Docker Image
+  jobs:
+  - job: Build
+    pool:
+      vmImage: ubuntu-latest
+    steps:
+    - task: Docker@2
+      inputs:
+        containerRegistry: 'dockerhub-ebtwim'  # تأكد من الاسم الصحيح
+        repository: 'ebtwim/$(imageName)'
+        command: 'buildAndPush'
+        Dockerfile: 'ui/Dockerfile'
+        tags: latest
+
+- stage: Deploy
+  displayName: Deploy Frontend to AKS
+  dependsOn: BuildAndPush
+  jobs:
+  - job: Deploy
+    pool:
+      vmImage: ubuntu-latest
+    steps:
+    - task: KubernetesManifest@1
+      displayName: 'Deploy Frontend Resources'
+      inputs:
+        action: deploy
+        connectionType: 'kubernetesServiceConnection'
+        kubernetesServiceConnection: 'k8s-connection'
+        namespace: 'project'
+        manifests: |
+          config_map.yml
+          frontend_deploy.yml
+          frontend_cluster_ip.yml
+          frontend_ingress.yml
+
+    - task: AzureCLI@2
+      displayName: 'Get Frontend Ingress Info'
+      inputs:
+        azureSubscription: 'Azure subscription for Capstone'
+        scriptType: 'bash'
+        scriptLocation: 'inlineScript'
+        inlineScript: |
+          echo "📥 Getting AKS credentials..."
+          az aks get-credentials \
+            --resource-group DevOps1-CapstoneProject-champ-rg \
+            --name DevOps1-CapstoneProject-champ-aks \
+            --overwrite-existing
+
+          echo "🌐 Verifying frontend ingress:"
+          kubectl get ingress -n project
+          kubectl describe ingress -n project
+          kubectl get svc -n project
+          kubectl get pods -n project
