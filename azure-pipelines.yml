@@ -23,7 +23,7 @@ stages:
           - task: Docker@2
             displayName: 'Build and Push Backend Image'
             inputs:
-              containerRegistry: 'DOCKERHUB_SERVICE_CONNECTION'
+              containerRegistry: 'dockerhub-ebtwim'
               repository: '$(backendImage)'
               command: 'buildAndPush'
               Dockerfile: 'api/Dockerfile'
@@ -33,7 +33,7 @@ stages:
           - task: Docker@2
             displayName: 'Build and Push Frontend Image'
             inputs:
-              containerRegistry: 'DOCKERHUB_SERVICE_CONNECTION'
+              containerRegistry: 'dockerhub-ebtwim'
               repository: '$(frontendImage)'
               command: 'buildAndPush'
               Dockerfile: 'ui/Dockerfile'
@@ -53,7 +53,7 @@ stages:
             displayName: 'Apply Kubernetes Manifests'
             inputs:
               connectionType: 'Azure Resource Manager'
-              azureSubscription: 'AZURE_SUBSCRIPTION_CONNECTION'
+              azureSubscription: 'SDA-capstone-aks'
               azureResourceGroup: 'DevOps1-CapstoneProject-champ-rg'
               kubernetesCluster: 'DevOps1-CapstoneProject-champ-aks'
               command: 'apply'
