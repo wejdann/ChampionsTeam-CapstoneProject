@@ -1,0 +1,19 @@
+trigger:
+  none
+
+pool:
+  vmImage: 'ubuntu-latest'
+
+steps:
+  - script: echo "🚀 Testing AKS connection..."
+    displayName: 'Start Test'
+
+  - task: Kubernetes@1
+    displayName: 'Test kubectl get pods'
+    inputs:
+      connectionType: 'Azure Resource Manager'
+      azureSubscription: 'SDA-capstone-aks'
+      azureResourceGroup: 'DevOps1-CapstoneProject-champ-rg'
+      kubernetesCluster: 'DevOps1-CapstoneProject-champ-aks'
+      command: 'get'
+      arguments: 'pods -A'
