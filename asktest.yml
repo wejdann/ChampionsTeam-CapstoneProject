@@ -12,7 +12,7 @@ steps:
     displayName: 'Test kubectl get pods'
     inputs:
       connectionType: 'Azure Resource Manager'
-      azureSubscription: 'SDA Azure DevOps Subscription'
+      azureSubscription: 'Azure for Capstone Project'  # ✅ غيّر هذا حسب اسمك الحقيقي
       azureResourceGroup: 'DevOps1-CapstoneProject-champ-rg'
       kubernetesCluster: 'DevOps1-CapstoneProject-champ-aks'
       command: 'get'
