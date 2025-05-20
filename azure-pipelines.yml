@@ -1,0 +1,68 @@
+trigger:
+  branches:
+    include:
+      - main
+
+variables:
+  imageRegistry: 'ebtwim'
+  backendImage: '$(imageRegistry)/backend'
+  frontendImage: '$(imageRegistry)/frontend'
+  tag: '$(Build.BuildId)'
+
+stages:
+  - stage: Build
+    jobs:
+      - job: BuildAndPushImages
+        displayName: 'Build and Push Docker Images to Docker Hub'
+        pool:
+          vmImage: 'ubuntu-latest'
+
+        steps:
+          - task: Checkout@1
+
+          - task: Docker@2
+            displayName: 'Build and Push Backend Image'
+            inputs:
+              containerRegistry: 'DOCKERHUB_SERVICE_CONNECTION'
+              repository: '$(backendImage)'
+              command: 'buildAndPush'
+              Dockerfile: 'api/Dockerfile'
+              tags: |
+                $(tag)
+
+          - task: Docker@2
+            displayName: 'Build and Push Frontend Image'
+            inputs:
+              containerRegistry: 'DOCKERHUB_SERVICE_CONNECTION'
+              repository: '$(frontendImage)'
+              command: 'buildAndPush'
+              Dockerfile: 'ui/Dockerfile'
+              tags: |
+                $(tag)
+
+  - stage: Deploy
+    dependsOn: Build
+    jobs:
+      - job: DeployToAKS
+        displayName: 'Deploy to AKS Cluster'
+        pool:
+          vmImage: 'ubuntu-latest'
+
+        steps:
+          - task: Kubernetes@1
+            displayName: 'Apply Kubernetes Manifests'
+            inputs:
+              connectionType: 'Azure Resource Manager'
+              azureSubscription: 'AZURE_SUBSCRIPTION_CONNECTION'
+              azureResourceGroup: 'DevOps1-CapstoneProject-champ-rg'
+              kubernetesCluster: 'DevOps1-CapstoneProject-champ-aks'
+              command: 'apply'
+              useConfigurationFile: true
+              configuration: |
+                $(System.DefaultWorkingDirectory)/namespace.yml
+                $(System.DefaultWorkingDirectory)/config_map.yml
+                $(System.DefaultWorkingDirectory)/backend_cluster_ip.yml
+                $(System.DefaultWorkingDirectory)/backend_deploy.yml
+                $(System.DefaultWorkingDirectory)/frontend_cluster_ip.yml
+                $(System.DefaultWorkingDirectory)/frontend_deploy.yml
+                $(System.DefaultWorkingDirectory)/frontend_ingress.yml
