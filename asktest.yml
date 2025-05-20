@@ -8,7 +8,7 @@ steps:
   - task: AzureCLI@2
     displayName: 'Set Azure Subscription and Connect to AKS'
     inputs:
-      azureSubscription: 'Azure for Capstone Project'  # ✅ اكتب هنا اسم الـ Service Connection بالضبط
+      azureSubscription: 'Azure for Capstone Project' 
       scriptType: 'bash'
       scriptLocation: 'inlineScript'
       inlineScript: |
