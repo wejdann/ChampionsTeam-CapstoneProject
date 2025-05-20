@@ -40,3 +40,23 @@ stages:
           backend_deploy.yml
           backend_cluster_ip.yml
           backend_ingress.yml
+
+    # ✅ معلومات التحقق بعد النشر
+    - task: AzureCLI@2
+      displayName: 'Get Ingress and Service Info (namespace: project)'
+      inputs:
+        azureSubscription: 'SDA-capstone-aks'  # <-- غيّر الاسم لو كان مختلف
+        scriptType: 'bash'
+        scriptLocation: 'inlineScript'
+        inlineScript: |
+          echo "🔍 Getting Kubernetes info in 'project' namespace..."
+
+          echo "👉 Ingress and services:"
+          kubectl get ingress -n project
+          kubectl get svc -n project
+          kubectl get pods -n project
+          kubectl describe ingress -n project
+
+          echo "👉 Ingress Controller (ingress-nginx):"
+          kubectl get pods -n ingress-nginx
+          kubectl get svc -n ingress-nginx
