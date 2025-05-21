@@ -1,22 +1,19 @@
 trigger:
-  none  # لا يتم التشغيل تلقائيًا
+  none  # لا يعمل تلقائيًا
 
 pool:
   vmImage: 'ubuntu-latest'
 
 steps:
 - task: Kubernetes@1
-  displayName: 'Test Kubernetes Connection (Nodes)'
-  inputs:
-    connectionType: 'Kubernetes Service Connection'
-    kubernetesServiceEndpoint: 'k8s-connection'  # اسم Kubernetes Service Connection
-    command: 'get'
-    arguments: 'nodes'
-
-- task: Kubernetes@1
-  displayName: 'Test Kubernetes Connection (Pods)'
+  displayName: 'Create Namespace (project)'
   inputs:
     connectionType: 'Kubernetes Service Connection'
     kubernetesServiceEndpoint: 'k8s-connection'
-    command: 'get'
-    arguments: 'pods --namespace project'
+    command: 'apply'
+    useConfigurationFile: true
+    configuration: |
+      apiVersion: v1
+      kind: Namespace
+      metadata:
+        name: project
