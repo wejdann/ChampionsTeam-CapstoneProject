@@ -1,0 +1,59 @@
+trigger:
+  none  # لا يتم التشغيل تلقائياً
+
+pool:
+  vmImage: 'ubuntu-latest'
+
+stages:
+- stage: DockerConnectionTest
+  displayName: 'Test DockerHub Connection'
+  jobs:
+  - job: DockerLogin
+    steps:
+    - script: echo "🚀 Testing DockerHub connection..."
+      displayName: 'Start Test'
+
+    - task: Docker@2
+      displayName: 'Login to DockerHub'
+      inputs:
+        containerRegistry: 'dockerhub-ebtwim'
+        command: 'login'
+
+- stage: AzureAksConnectionTest
+  displayName: 'Test Azure AKS Connection'
+  jobs:
+  - job: TestAks
+    steps:
+    - task: AzureCLI@2
+      displayName: 'Test AKS Connection'
+      inputs:
+        azureSubscription: 'Azure-subscription-for-Capstone'
+        scriptType: 'bash'
+        scriptLocation: 'inlineScript'
+        inlineScript: |
+          echo "🔐 Getting AKS credentials..."
+          az aks get-credentials --resource-group DevOps1-CapstoneProject-champ-rg --name DevOps1-CapstoneProject-champ-aks --overwrite-existing
+
+          echo "📦 Verifying AKS nodes..."
+          kubectl get nodes
+
+- stage: CreateNamespace
+  displayName: 'Create AKS Namespace'
+  jobs:
+  - job: NamespaceJob
+    steps:
+    - task: AzureCLI@2
+      displayName: 'Get AKS Credentials and Create Namespace'
+      inputs:
+        azureSubscription: 'Azure-subscription-for-Capstone'
+        scriptType: 'bash'
+        scriptLocation: 'inlineScript'
+        inlineScript: |
+          echo "Getting AKS credentials..."
+          az aks get-credentials \
+            --resource-group DevOps1-CapstoneProject-champ-rg \
+            --name DevOps1-CapstoneProject-champ-aks \
+            --overwrite-existing
+
+          echo "Creating namespace (if not exists)..."
+          kubectl get namespace project || kubectl create namespace project
