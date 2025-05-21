@@ -8,7 +8,7 @@ steps:
   - task: AzureCLI@2
     displayName: 'Test AKS Connection'
     inputs:
-      azureSubscription: ' Azure subscription for Capstone '
+      azureSubscription: ' Azure-subscription-for-Capstone'
       scriptType: 'bash'
       scriptLocation: 'inlineScript'
       inlineScript: |
