@@ -1,74 +1,59 @@
 trigger:
-  branches:
-    include:
-      - main
+  none  # لا يتم التشغيل تلقائياً
 
-variables:
-  imageRegistry: 'ebtwim'
-  backendImage: '$(imageRegistry)/backend'
-  frontendImage: '$(imageRegistry)/frontend'
-  tag: '$(Build.BuildId)'
+pool:
+  vmImage: 'ubuntu-latest'
 
 stages:
-  - stage: Build
-    jobs:
-      - job: BuildAndPushImages
-        displayName: 'Build and Push Docker Images to Docker Hub'
-        pool:
-          vmImage: 'ubuntu-latest'
+- stage: DockerConnectionTest
+  displayName: 'Test DockerHub Connection'
+  jobs:
+  - job: DockerLogin
+    steps:
+    - script: echo "🚀 Testing DockerHub connection..."
+      displayName: 'Start Test'
 
-        steps:
-          - script: echo "Pipeline started successfully (Build stage)"
-            displayName: 'Debug Start'
+    - task: Docker@2
+      displayName: 'Login to DockerHub'
+      inputs:
+        containerRegistry: 'dockerhub-ebtwim'
+        command: 'login'
 
-          - task: Checkout@1
+- stage: AzureAksConnectionTest
+  displayName: 'Test Azure AKS Connection'
+  jobs:
+  - job: TestAks
+    steps:
+    - task: AzureCLI@2
+      displayName: 'Test AKS Connection'
+      inputs:
+        azureSubscription: 'Azure-subscription-for-Capstone'
+        scriptType: 'bash'
+        scriptLocation: 'inlineScript'
+        inlineScript: |
+          echo "🔐 Getting AKS credentials..."
+          az aks get-credentials --resource-group DevOps1-CapstoneProject-champ-rg --name DevOps1-CapstoneProject-champ-aks --overwrite-existing
 
-          - task: Docker@2
-            displayName: 'Build and Push Backend Image'
-            inputs:
-              containerRegistry: 'dockerhub-ebtwim'
-              repository: '$(backendImage)'
-              command: 'buildAndPush'
-              Dockerfile: 'api/Dockerfile'
-              tags: |
-                $(tag)
+          echo "📦 Verifying AKS nodes..."
+          kubectl get nodes
 
-          - task: Docker@2
-            displayName: 'Build and Push Frontend Image'
-            inputs:
-              containerRegistry: 'dockerhub-ebtwim'
-              repository: '$(frontendImage)'
-              command: 'buildAndPush'
-              Dockerfile: 'ui/Dockerfile'
-              tags: |
-                $(tag)
+- stage: CreateNamespace
+  displayName: 'Create AKS Namespace'
+  jobs:
+  - job: NamespaceJob
+    steps:
+    - task: AzureCLI@2
+      displayName: 'Get AKS Credentials and Create Namespace'
+      inputs:
+        azureSubscription: 'Azure-subscription-for-Capstone'
+        scriptType: 'bash'
+        scriptLocation: 'inlineScript'
+        inlineScript: |
+          echo "Getting AKS credentials..."
+          az aks get-credentials \
+            --resource-group DevOps1-CapstoneProject-champ-rg \
+            --name DevOps1-CapstoneProject-champ-aks \
+            --overwrite-existing
 
-  - stage: Deploy
-    dependsOn: Build
-    jobs:
-      - job: DeployToAKS
-        displayName: 'Deploy to AKS Cluster'
-        pool:
-          vmImage: 'ubuntu-latest'
-
-        steps:
-          - script: echo "Pipeline started successfully (Deploy stage)"
-            displayName: 'Debug Start'
-
-          - task: Kubernetes@1
-            displayName: 'Apply Kubernetes Manifests'
-            inputs:
-              connectionType: 'Azure Resource Manager'
-              azureSubscription: 'Azure subscription for Capstone'
-              azureResourceGroup: 'DevOps1-CapstoneProject-champ-rg'
-              kubernetesCluster: 'DevOps1-CapstoneProject-champ-aks'
-              command: 'apply'
-              useConfigurationFile: true
-              configuration: |
-                $(System.DefaultWorkingDirectory)/namespace.yml
-                $(System.DefaultWorkingDirectory)/config_map.yml
-                $(System.DefaultWorkingDirectory)/backend_cluster_ip.yml
-                $(System.DefaultWorkingDirectory)/backend_deploy.yml
-                $(System.DefaultWorkingDirectory)/frontend_cluster_ip.yml
-                $(System.DefaultWorkingDirectory)/frontend_deploy.yml
-                $(System.DefaultWorkingDirectory)/frontend_ingress.yml
+          echo "Creating namespace (if not exists)..."
+          kubectl get namespace project || kubectl create namespace project
