@@ -1,0 +1,96 @@
+trigger:
+  branches:
+    include:
+      - main
+
+variables:
+  imageName: backend-app
+
+stages:
+- stage: BuildAndPush
+  displayName: Build and Push Docker Image
+  jobs:
+  - job: Build
+    pool:
+      vmImage: ubuntu-latest
+    steps:
+    - task: Docker@2
+      inputs:
+        containerRegistry: 'dockerhub-ebtwim'
+        repository: 'ebtwim/$(imageName)'
+        command: 'buildAndPush'
+        Dockerfile: 'api/Dockerfile'
+        tags: latest
+
+- stage: Deploy
+  displayName: Deploy to AKS
+  dependsOn: BuildAndPush
+  jobs:
+  - job: Deploy
+    pool:
+      vmImage: ubuntu-latest
+    steps:
+    
+    # 🛠️ تثبيت ingress-nginx باستخدام Helm
+    - task: AzureCLI@2
+      displayName: 'Install ingress-nginx via Helm'
+      inputs:
+        azureSubscription: 'Azure-subscription-for-Capstone'
+        scriptType: 'bash'
+        scriptLocation: 'inlineScript'
+        inlineScript: |
+          echo "📥 Getting AKS credentials..."
+          az aks get-credentials \
+            --resource-group DevOps1-CapstoneProject-champ-rg \
+            --name DevOps1-CapstoneProject-champ-aks \
+            --overwrite-existing
+
+          echo "📦 Adding ingress-nginx repo and installing ingress controller..."
+          helm repo add ingress-nginx https://kubernetes.github.io/ingress-nginx
+          helm repo update
+
+          # تحقق من وجوده مسبقًا لتجنب الخطأ
+          helm status nginx-ingress -n ingress-nginx || helm install nginx-ingress ingress-nginx/ingress-nginx \
+            --namespace ingress-nginx \
+            --create-namespace \
+            --set controller.ingressClassResource.name=nginx \
+            --set controller.ingressClassResource.controllerValue=k8s.io/ingress-nginx \
+            --set controller.service.type=LoadBalancer
+
+    # 🚀 نشر التطبيق باستخدام ملفات Kubernetes
+    - task: KubernetesManifest@1
+      displayName: 'Deploy Backend to AKS'
+      inputs:
+        action: deploy
+        connectionType: 'kubernetesServiceConnection'
+        kubernetesServiceConnection: 'k8s-connection'
+        namespace: 'project'
+        manifests: |
+          backend_deploy.yml
+          backend_cluster_ip.yml
+          backend_ingress.yml
+
+    # 🔍 طباعة معلومات الخدمات والـ ingress
+    - task: AzureCLI@2
+      displayName: 'Get Ingress and Service Info'
+      inputs:
+        azureSubscription: 'Azure-subscription-for-Capstone'
+        scriptType: 'bash'
+        scriptLocation: 'inlineScript'
+        inlineScript: |
+          echo "📥 Getting AKS credentials again (if needed)..."
+          az aks get-credentials \
+            --resource-group DevOps1-CapstoneProject-champ-rg \
+            --name DevOps1-CapstoneProject-champ-aks \
+            --overwrite-existing
+
+          echo "🌐 Ingress and services in 'project' namespace:"
+          kubectl get ingress -n project
+          kubectl describe ingress -n project
+          kubectl get svc -n project
+          kubectl get pods -n project
+          kubectl get events -n project --sort-by=.metadata.creationTimestamp
+
+          echo "🌐 Ingress Controller (ingress-nginx) status:"
+          kubectl get svc -n ingress-nginx
+          kubectl get pods -n ingress-nginx
