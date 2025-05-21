@@ -35,7 +35,7 @@ stages:
     - task: AzureCLI@2
       displayName: 'Install ingress-nginx via Helm'
       inputs:
-        azureSubscription: 'Azure subscription for Capstone'
+        azureSubscription: 'Azure-subscription-for-Capstone'
         scriptType: 'bash'
         scriptLocation: 'inlineScript'
         inlineScript: |
@@ -74,7 +74,7 @@ stages:
     - task: AzureCLI@2
       displayName: 'Get Ingress and Service Info'
       inputs:
-        azureSubscription: 'Azure subscription for Capstone'
+        azureSubscription: 'Azure-subscription-for-Capstone'
         scriptType: 'bash'
         scriptLocation: 'inlineScript'
         inlineScript: |
