@@ -8,9 +8,12 @@ steps:
   - task: AzureCLI@2
     displayName: 'Test AKS Connection'
     inputs:
-      azureSubscription: ' Azure-subscription-for-Capstone'
+      azureSubscription: 'Azure-subscription-for-Capstone'  # ✅ بدون فراغ زائد
       scriptType: 'bash'
       scriptLocation: 'inlineScript'
       inlineScript: |
+        echo "🔐 Getting AKS credentials..."
         az aks get-credentials --resource-group DevOps1-CapstoneProject-champ-rg --name DevOps1-CapstoneProject-champ-aks --overwrite-existing
+
+        echo "📦 Verifying AKS nodes..."
         kubectl get nodes
