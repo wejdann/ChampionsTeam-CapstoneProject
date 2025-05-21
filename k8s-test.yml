@@ -1,0 +1,14 @@
+trigger:
+  none  # لا يتم التشغيل تلقائيًا
+
+pool:
+  vmImage: 'ubuntu-latest'
+
+steps:
+- task: Kubernetes@1
+  displayName: 'Test Kubernetes Connection'
+  inputs:
+    connectionType: 'Kubernetes Service Connection'
+    kubernetesServiceEndpoint: 'k8s-connection'  # اسم Kubernetes Service Connection
+    command: 'get'
+    arguments: 'nodes'
