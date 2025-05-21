@@ -1,5 +1,5 @@
 trigger:
-  none  # لا يعمل تلقائيًا
+  none
 
 pool:
   vmImage: 'ubuntu-latest'
@@ -11,8 +11,10 @@ steps:
     connectionType: 'Kubernetes Service Connection'
     kubernetesServiceEndpoint: 'k8s-connection'
     command: 'apply'
-    useConfigurationFile: true
-    configuration: |
+    arguments: '-f -'
+    secretType: 'None'
+    useConfigurationFile: false
+    inline: |
       apiVersion: v1
       kind: Namespace
       metadata:
