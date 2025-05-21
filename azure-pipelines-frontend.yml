@@ -46,7 +46,7 @@ stages:
     - task: AzureCLI@2
       displayName: 'Get Frontend Ingress Info'
       inputs:
-        azureSubscription: 'Azure subscription for Capstone'
+        azureSubscription: 'Azure-subscription-for-Capstone'
         scriptType: 'bash'
         scriptLocation: 'inlineScript'
         inlineScript: |
