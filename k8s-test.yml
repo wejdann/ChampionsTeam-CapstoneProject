@@ -6,9 +6,17 @@ pool:
 
 steps:
 - task: Kubernetes@1
-  displayName: 'Test Kubernetes Connection'
+  displayName: 'Test Kubernetes Connection (Nodes)'
   inputs:
     connectionType: 'Kubernetes Service Connection'
     kubernetesServiceEndpoint: 'k8s-connection'  # اسم Kubernetes Service Connection
     command: 'get'
     arguments: 'nodes'
+
+- task: Kubernetes@1
+  displayName: 'Test Kubernetes Connection (Pods)'
+  inputs:
+    connectionType: 'Kubernetes Service Connection'
+    kubernetesServiceEndpoint: 'k8s-connection'
+    command: 'get'
+    arguments: 'pods --namespace project'
