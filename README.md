@@ -1,75 +1,176 @@
-# 3-Tier Application
+# Capstone Project: 3-Tier Kubernetes App Deployment on Azure
 
-This repository contains a 3-tier web application with a frontend, backend API, and database layer, hosted on Azure for scalability and security.
+This project demonstrates the use of **Terraform** to provision infrastructure and **Azure DevOps Pipelines** to automate deployment of a 3-tier web application on **Azure Kubernetes Service (AKS)**.
 
-## Project Structure
+---
+
+## 📦 Project Overview
+
+### Infrastructure Components (via Terraform):
+
+* **Azure Kubernetes Service (AKS)**
+* **Azure SQL Database**
+* **Azure Storage Account** (for Terraform state)
+* **Azure Virtual Network (VNet)** and Subnets
+* **Azure App Monitoring Tools**: Prometheus & Grafana
+
+### Application Layers:
+
+* **Frontend**: Next.js (served via Nginx)
+* **Backend**: Node.js REST API
+* **Database**: Azure SQL
+
+---
+
+## 📁 Repository Structure
 
 ```
-|-- UI/           # Frontend - Web Application (HTML, CSS, JavaScript)
-|-- api/          # Backend - Node.js Application
-|-- README.md     # Documentation
+root/
+│
+├── terraform/                   # Infrastructure as code
+│   ├── Azurerm/                 # Modularized resources
+│   └── solution/                # Root terraform configuration
+│
+├── k8s_solution/               # K8s manifests for backend/frontend
+│
+├── frontend/                   # Frontend application code
+└── backend/                    # Backend application code
 ```
 
-## Components
+---
 
-### 1. Frontend (UI)
-- Developed using HTML, CSS, and JavaScript.
-- Served using Nginx.
-- Hosted within an Azure Storage Account (Static Website Hosting).
+## 🌐 Terraform Remote State (Azure Blob)
 
-### 2. Backend API
-- A Node.js application providing backend functionality.
-- Hosted on Azure App Services.
-- Exposes RESTful endpoints for frontend interactions.
+### Why Remote State?
 
-### 3. Database
-- Uses Azure SQL Database for data storage.
-- Secured with Azure Active Directory authentication.
+Using a shared backend allows the team to:
 
-### 4. Networking & Security
-- Azure Virtual Network (VNet) for secure communication.
-- Azure Application Gateway for routing traffic and load balancing.
-- Azure Firewall and NSGs for enhanced security.
+* Keep state centralized and consistent
+* Prevent concurrent modification issues
+* Enable collaboration without conflict
 
-## Deployment
+### Backend Configuration
 
-### Prerequisites
-- Azure Account with necessary permissions.
-- Node.js & npm installed.
-- Azure CLI installed.
-- Terraform or ARM templates for infrastructure as code (optional).
+```hcl
+terraform {
+  backend "azurerm" {
+    resource_group_name   = "DevOps1-tfstate-rg"
+    storage_account_name  = "devopstfstatechamp"
+    container_name        = "tfstate"
+    key                   = "terraform.tfstate"
+  }
+}
+```
 
-### Deployment Steps
+### Storage Setup (One-Time Step)
 
-#### Frontend Deployment
-1. Build the frontend files (if applicable).
-2. Upload files to an Azure Storage Account.
-3. Configure Nginx for static file hosting.
+```bash
+az group create --name DevOps1-tfstate-rg --location "East US"
+az storage account create --name devopstfstatechamp --resource-group DevOps1-tfstate-rg --sku Standard_LRS
+az storage container create --name tfstate --account-name devopstfstatechamp --auth-mode login
+```
 
-#### Backend Deployment
-1. Navigate to the `api/` folder and install dependencies:
+---
 
-   ```sh
-   cd api/
-   npm install
-   ```
+## ⚙️ Terraform Deployment Process
 
-2. Deploy the application to Azure App Services:
+### Prerequisites:
 
-   ```sh
-   az webapp up --name <app-name> --resource-group <resource-group> --runtime "NODE|18-lts"
-   ```
+* Azure CLI
+* Terraform CLI
+* Contributor & Storage Blob Data Contributor roles
+* Git
 
-#### Database Setup
-1. Create an Azure SQL Database.
-2. Configure the connection string in the backend API.
+### Steps:
 
-#### Networking & Security Configuration
-1. Set up VNet integration.
-2. Deploy Azure Application Gateway for traffic routing.
-3. Apply firewall rules and NSGs for access control.
+```bash
+cd terraform/solution
+az login
+terraform init
+terraform plan
+terraform apply
+```
 
-## Usage
-- Access the frontend via the Nginx server URL.
-- The frontend communicates with the backend via the Azure App Service API URL.
-- The API interacts with the Azure SQL Database.
+---
+
+## 💡 AKS Pipeline with Azure DevOps
+
+### Pipeline 1: AKS Infrastructure + Monitoring
+
+**Stage 1 – Terraform Deployment**
+
+* Install Terraform
+* Authenticate with Azure using service principal
+* Run `terraform init`, `plan`, `apply`
+
+**Stage 2 – Monitoring Setup**
+
+* Install Helm
+* Install Prometheus and Grafana via Helm
+* Expose both services as LoadBalancers
+* Use a `for` loop to wait up to 5 minutes for external IPs to be assigned
+* Print the external IPs + Grafana credentials (admin/admin123)
+
+```bash
+for i in {1..10}; do
+  kubectl get svc -n monitoring | grep -q 'pending' && sleep 30 || break
+done
+```
+
+---
+
+## 🧪 Frontend and Backend Pipelines
+
+### Backend Pipeline (build & deploy):
+
+1. **Build Docker image**
+
+   * Push to Docker Hub
+
+2. **Deploy to AKS**
+
+   * Use `kubectl apply` to deploy:
+
+     * Deployment
+     * ClusterIP service
+     * Ingress
+   * Ingress managed via Helm-installed nginx controller
+
+### Frontend Pipeline:
+
+* Same structure as backend pipeline
+* Deploys Next.js app via Nginx
+* Uses config map for environment settings
+* Displays external IP via pipeline logs
+
+---
+
+## 🔐 Secure Azure SQL Database
+
+* The backend connects to Azure SQL via an environment variable (set in K8s ConfigMap)
+* Database is provisioned via Terraform
+* Virtual network rules restrict access to AKS subnet
+
+---
+
+## 📈 Access Monitoring Tools
+
+After pipeline run:
+
+* Visit Prometheus External IP (`/graph`)
+* Visit Grafana External IP and login (`admin/admin123`)
+* Use port 9090 for Prometheus and 3000 for Grafana
+
+---
+
+## 👥 Team Collaboration Notes
+
+* Terraform state is shared via Azure Blob
+* Avoid committing `.terraform/` or `*.tfstate` to Git
+* All team members run the same commands:
+
+```bash
+terraform init
+terraform plan
+terraform apply
+```gi
