@@ -1,1 +1,5 @@
 node_modules
+# Ignore test files only
+Test-connection.yml
+testdockerhub.yml
+k8s-test.yml
